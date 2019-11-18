@@ -14,12 +14,17 @@
 int8_t flag = 0;
 int16_t counter = 0;
 int16_t output_counter = 0;
+int16_t algorithm_frame_counter = 0;
+int8_t play_processed_signal = 0;
 int8_t output_flag;
 float_t ref_signal_original[SOUND_LENGTH] = {};
 float_t ref_signal[SOUND_LENGTH] = {};
 float_t primary_signal[SOUND_LENGTH] = {};
 float_t combined_signal[SOUND_LENGTH] = {};
-//float_t error_signal[SOUND_LENGTH] = {};
+float_t error_signal[SOUND_LENGTH] = {};
+
+void nLMS();
+
 
 void ece420ProcessFrame(sample_buf *dataBuf) {
     // Keep in mind, we only have a small amount of time to process each buffer
@@ -52,7 +57,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     else if (flag == 0) {
         flag++;
         counter = 0;
-        LOGD("----- Original reference signal filled -----");
+        LOGD("----- Original reference signal filled, input reference signal next -----");
         for (int i = 0; i < DELAY; i++) {
         }
     }
@@ -67,7 +72,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     else if (flag == 1) {
         flag++;
         counter = 0;
-        LOGD("----- Reference signal filled -----");
+        LOGD("----- Reference signal filled, input primary signal next -----");
         for (int i = 0; i < DELAY; i++) {
         }
     }
@@ -82,7 +87,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     else if (flag == 2) {
         flag++;
         counter = 0;
-        LOGD("----- Primary signal filled -----");
+        LOGD("----- Primary signal filled, apply synthesis next -----");
         for (int i = 0; i < DELAY; i++) {
         }
     }
@@ -97,8 +102,22 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     else if (flag == 3) {
         flag++;
         counter = 0;
-        LOGD("----- Synthesis signal Completed -----");
+        LOGD("----- Synthesis signal completed, apply algorithm next -----");
         for (int i = 0; i < DELAY; i++) {
+        }
+    }
+
+    // Apply algorithm
+    else if(flag == 4) {
+        if (algorithm_frame_counter > SOUND_LENGTH / FRAME_SIZE) {
+            flag ++;
+            algorithm_frame_counter = 0;
+            LOGD("----- Algorithm finished, output combined signal next -----");
+            for (int i = 0; i < DELAY; i++) {
+            }
+        }
+        else {
+            nLMS();
         }
     }
 
@@ -107,15 +126,18 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 
     // Loop code provided as a suggestion. This loop simulates sample-by-sample processing.
     for (int sampleIdx = 0; sampleIdx < FRAME_SIZE; sampleIdx++) {
-        int16_t output;
+        int16_t output = 0;
         // if combined signal filled, write to output, otherwise do not play sound
-        if (flag < 4) {
-            output = 0;
+        if (flag < 5) {
             output_flag = 0;
         }
 
-        else {
+        else if (play_processed_signal == 0)  {
             output = (int16_t)combined_signal[output_counter*FRAME_SIZE + sampleIdx];
+            output_flag = 1;
+        }
+        else if (play_processed_signal == 1) {
+            output = (int16_t)error_signal[output_counter*FRAME_SIZE + sampleIdx];
             output_flag = 1;
         }
         // Grab result and put into bufferOut[]
@@ -125,11 +147,22 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     if (output_flag) {
         output_counter++;
         if (output_counter > SOUND_LENGTH/FRAME_SIZE) {
-            counter = 0;
-            flag = 0;
-            output_counter = 0;
-            LOGD("----- Combined signal outputted -----");
-            for (int i = 0; i < DELAY; i++) {
+            if (play_processed_signal == 0) {
+                output_counter = 0;
+                play_processed_signal = 1;
+                LOGD("----- Combined signal outputted, output processed signal next -----");
+                for (int i = 0; i < DELAY; i++) {
+                }
+            }
+            else {
+                counter = 0;
+                flag = 0;
+                output_counter = 0;
+                play_processed_signal = 0;
+                algorithm_frame_counter = 0;
+                LOGD("----- Processed signal outputted, DONE -----");
+                for (int i = 0; i < DELAY; i++) {
+                }
             }
         }
     }
@@ -145,10 +178,14 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 
     }
     // ********************* END YOUR CODE HERE ********************* //
-
-	// Log the processing time to Android Monitor or Logcat window at the bottom
-//    struct timeval end;
-//    gettimeofday(&end, NULL);
-//    LOGD("Loop timer: %ld us",  ((end.tv_sec * 1000000 + end.tv_usec) - (start.tv_sec * 1000000 + start.tv_usec)));
-
 }
+
+void nLMS() {
+    //Apply algorithm to one frame!!
+
+    // ********************* START YOUR CODE HERE ********************* //
+
+    // ********************* END YOUR CODE HERE ********************* //
+    algorithm_frame_counter ++;
+}
+
