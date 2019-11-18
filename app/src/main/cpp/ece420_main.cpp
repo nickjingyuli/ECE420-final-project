@@ -42,76 +42,84 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     }
 
     // Fill original ref signal
-    if (flag == 0 && counter < SOUND_LENGTH/FRAME_SIZE) {
-        for (int i = 0; i < FRAME_SIZE; i++) {
-            ref_signal_original[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
+    if (flag == 0) {
+        if (counter <  SOUND_LENGTH/FRAME_SIZE) {
+            for (int i = 0; i < FRAME_SIZE; i++) {
+                ref_signal_original[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
+            }
+            counter++;
         }
-        counter++;
-    }
-    else if (flag == 0) {
-        flag++;
-        counter = 0;
-        LOGD("----- Original reference signal filled, input reference signal next -----");
-        for (int i = 0; i < DELAY; i++) {
+        else {
+            flag++;
+            counter = 0;
+            LOGD("----- Original reference signal filled, input reference signal next -----");
+            for (int i = 0; i < DELAY; i++) {
+            }
         }
     }
 
     // Fill ref signal
-    if (flag == 1 && counter < SOUND_LENGTH/FRAME_SIZE) {
-        for (int i = 0; i < FRAME_SIZE; i++) {
-            ref_signal[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
-        }
-        counter++;
-    }
     else if (flag == 1) {
-        flag++;
-        counter = 0;
-        LOGD("----- Reference signal filled, input primary signal next -----");
-        for (int i = 0; i < DELAY; i++) {
+        if (counter < SOUND_LENGTH/FRAME_SIZE) {
+            for (int i = 0; i < FRAME_SIZE; i++) {
+                ref_signal[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
+            }
+            counter++;
+        }
+        else {
+            flag++;
+            counter = 0;
+            LOGD("----- Reference signal filled, input primary signal next -----");
+            for (int i = 0; i < DELAY; i++) {
+            }
         }
     }
 
     // Fill primary signal
-    else if (flag == 2 && counter < SOUND_LENGTH/FRAME_SIZE) {
-        for (int i = 0; i < FRAME_SIZE; i++) {
-            primary_signal[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
-        }
-        counter++;
-    }
     else if (flag == 2) {
-        flag++;
-        counter = 0;
-        LOGD("----- Primary signal filled, apply synthesis next -----");
-        for (int i = 0; i < DELAY; i++) {
+        if (counter < SOUND_LENGTH/FRAME_SIZE) {
+            for (int i = 0; i < FRAME_SIZE; i++) {
+                primary_signal[FRAME_SIZE*counter + i] = (float_t)bufferIn[i];
+            }
+            counter++;
+        }
+        else {
+            flag++;
+            counter = 0;
+            LOGD("----- Primary signal filled, apply synthesis next -----");
+            for (int i = 0; i < DELAY; i++) {
+            }
         }
     }
 
     // Synthesize noise + primary
-    else if (flag == 3 && counter < SOUND_LENGTH / FRAME_SIZE) {
-        for (int i = 0; i < FRAME_SIZE; i++) {
-            combined_signal[FRAME_SIZE*counter + i] = primary_signal[FRAME_SIZE*counter + i] + ref_signal[FRAME_SIZE*counter + i];
-        }
-        counter++;
-    }
     else if (flag == 3) {
-        flag++;
-        counter = 0;
-        LOGD("----- Synthesis signal completed, apply algorithm next -----");
-        for (int i = 0; i < DELAY; i++) {
+        if (counter < SOUND_LENGTH / FRAME_SIZE) {
+            for (int i = 0; i < FRAME_SIZE; i++) {
+                combined_signal[FRAME_SIZE*counter + i] = primary_signal[FRAME_SIZE*counter + i] + ref_signal[FRAME_SIZE*counter + i];
+            }
+            counter++;
+        }
+        else {
+            flag++;
+            counter = 0;
+            LOGD("----- Synthesis signal completed, apply algorithm next -----");
+            for (int i = 0; i < DELAY; i++) {
+            }
         }
     }
 
     // Apply algorithm
     else if(flag == 4) {
-        if (algorithm_frame_counter > SOUND_LENGTH / FRAME_SIZE) {
+        if (algorithm_frame_counter < SOUND_LENGTH / FRAME_SIZE) {
+            nLMS();
+        }
+        else {
             flag ++;
             algorithm_frame_counter = 0;
             LOGD("----- Algorithm finished, output combined signal next -----");
             for (int i = 0; i < DELAY; i++) {
             }
-        }
-        else {
-            nLMS();
         }
     }
 
