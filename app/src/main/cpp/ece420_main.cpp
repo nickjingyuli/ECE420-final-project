@@ -148,7 +148,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 
     if (output_flag) {
         output_counter++;
-        if (output_counter > SOUND_LENGTH/FRAME_SIZE) {
+        if (output_counter >= SOUND_LENGTH/FRAME_SIZE) {
             if (play_processed_signal == 0) {
                 output_counter = 0;
                 play_processed_signal = 1;
