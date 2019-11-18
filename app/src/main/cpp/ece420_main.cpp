@@ -173,7 +173,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 }
 
 void nLMS() {
-    //Apply algorithm to one frame!!
+    // !!! Apply algorithm to one frame using algorithm_frame_counter !!!
 
     // ********************* START YOUR CODE HERE ********************* //
 
