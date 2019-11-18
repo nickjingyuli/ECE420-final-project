@@ -1,12 +1,7 @@
-//
-// Created by daran on 1/12/2017 to be used in ECE420 Sp17 for the first time.
-// Modified by dwang49 on 1/1/2018 to adapt to Android 7.0 and Shield Tablet updates.
-//
 
 #include <cmath>
 #include "ece420_main.h"
 
-// Student Variables
 #define FRAME_SIZE 128
 #define SOUND_LENGTH (256000/2)
 #define DELAY 20000000
@@ -27,7 +22,6 @@ void nLMS();
 
 
 void ece420ProcessFrame(sample_buf *dataBuf) {
-    // Keep in mind, we only have a small amount of time to process each buffer
 
     // Using {} initializes all values in the array to zero
     int16_t bufferIn[FRAME_SIZE] = {};
@@ -127,7 +121,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     // Loop code provided as a suggestion. This loop simulates sample-by-sample processing.
     for (int sampleIdx = 0; sampleIdx < FRAME_SIZE; sampleIdx++) {
         int16_t output = 0;
-        // if combined signal filled, write to output, otherwise do not play sound
+
         if (flag < 5) {
             output_flag = 0;
         }
@@ -166,8 +160,6 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
             }
         }
     }
-
-    // Your buffer conversion (packing) here
     // Fetch data sample from bufferOut[], pack them and put back into dataBuf->buf_[]
     // ******************** START YOUR CODE HERE ******************** //
     for (int i = 0; i < FRAME_SIZE; i++) {
