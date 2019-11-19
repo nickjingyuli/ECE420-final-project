@@ -5,18 +5,24 @@
 #define FRAME_SIZE 128
 #define SOUND_LENGTH (256000/2)
 #define DELAY 20000000
+#define N_TAPS 55
+#define STEP_SIZE 0.000000001
+
 
 int8_t flag = 0;
 int16_t counter = 0;
 int16_t output_counter = 0;
-int16_t algorithm_frame_counter = 0;
 int8_t play_processed_signal = 0;
 int8_t output_flag;
+
+float_t w[N_TAPS] = {};
 float_t ref_signal_original[SOUND_LENGTH] = {};
 float_t ref_signal[SOUND_LENGTH] = {};
 float_t primary_signal[SOUND_LENGTH] = {};
 float_t combined_signal[SOUND_LENGTH] = {};
+
 float_t error_signal[SOUND_LENGTH] = {};
+float_t y[SOUND_LENGTH] = {};
 
 void nLMS();
 
@@ -58,7 +64,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
         }
     }
 
-    // Fill ref signal
+        // Fill ref signal
     else if (flag == 1) {
         if (counter < SOUND_LENGTH/FRAME_SIZE) {
             for (int i = 0; i < FRAME_SIZE; i++) {
@@ -75,7 +81,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
         }
     }
 
-    // Fill primary signal
+        // Fill primary signal
     else if (flag == 2) {
         if (counter < SOUND_LENGTH/FRAME_SIZE) {
             for (int i = 0; i < FRAME_SIZE; i++) {
@@ -92,7 +98,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
         }
     }
 
-    // Synthesize noise + primary
+        // Synthesize noise + primary
     else if (flag == 3) {
         if (counter < SOUND_LENGTH / FRAME_SIZE) {
             for (int i = 0; i < FRAME_SIZE; i++) {
@@ -109,18 +115,24 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
         }
     }
 
-    // Apply algorithm
+        // Apply algorithm
     else if(flag == 4) {
-        if (algorithm_frame_counter < SOUND_LENGTH / FRAME_SIZE) {
-            nLMS();
+//        if (algorithm_frame_counter < SOUND_LENGTH / FRAME_SIZE) {
+//            nLMS();
+//        }
+//        else {
+//            flag ++;
+//            algorithm_frame_counter = 0;
+//            LOGD("----- Algorithm finished, output combined signal next -----");
+//            for (int i = 0; i < DELAY; i++) {
+//            }
+//        }
+        nLMS();
+        flag++;
+        LOGD("----- Algorithm finished, output combined signal next -----");
+        for (int i = 0; i < DELAY; i++) {
         }
-        else {
-            flag ++;
-            algorithm_frame_counter = 0;
-            LOGD("----- Algorithm finished, output combined signal next -----");
-            for (int i = 0; i < DELAY; i++) {
-            }
-        }
+
     }
 
 
@@ -155,8 +167,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
                 LOGD("----- Combined signal outputted, output processed signal next -----");
                 for (int i = 0; i < DELAY; i++) {
                 }
-            }
-            else {
+            } else {
                 counter = 0;
                 flag = 0;
                 output_counter = 0;
@@ -164,6 +175,9 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
                 algorithm_frame_counter = 0;
                 LOGD("----- Processed signal outputted, DONE -----");
                 for (int i = 0; i < DELAY; i++) {
+                    if (i < 100) {
+                        LOGD("%f", error_signal[i]);
+                    }
                 }
             }
         }
@@ -181,11 +195,28 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 }
 
 void nLMS() {
-    // !!! Apply algorithm to one frame using algorithm_frame_counter !!!
+    //x is a slice of the reference noise equal in size to w
+    float_t x[N_TAPS];
 
-    // ********************* START YOUR CODE HERE ********************* //
+    for (int i = 0; i < SOUND_LENGTH - N_TAPS; i++) {
 
-    // ********************* END YOUR CODE HERE ********************* //
-    algorithm_frame_counter ++;
+        for (int j = 0; j < N_TAPS; j++) {
+            //flip kernel
+            x[j] = ref_signal[(i+N_TAPS-1)-j];
+        }
+
+        for (int k = 0; k < N_TAPS; k++) {
+            y[i] += x[k]*w[k];
+        }
+
+        error_signal[i] = combined_signal[i+N_TAPS-1] - y[i];
+
+        for (int k = 0; k < N_TAPS; k++) {
+            w[k] += STEP_SIZE*x[k]*error_signal[i];
+        }
+
+    }
+
+    LOGD("----- nLMS complete -----");
 }
 
