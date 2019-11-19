@@ -117,16 +117,6 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
 
         // Apply algorithm
     else if(flag == 4) {
-//        if (algorithm_frame_counter < SOUND_LENGTH / FRAME_SIZE) {
-//            nLMS();
-//        }
-//        else {
-//            flag ++;
-//            algorithm_frame_counter = 0;
-//            LOGD("----- Algorithm finished, output combined signal next -----");
-//            for (int i = 0; i < DELAY; i++) {
-//            }
-//        }
         nLMS();
         flag++;
         LOGD("----- Algorithm finished, output combined signal next -----");
