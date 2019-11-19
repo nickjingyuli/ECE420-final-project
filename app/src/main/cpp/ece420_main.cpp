@@ -5,7 +5,7 @@
 #define FRAME_SIZE 128
 #define SOUND_LENGTH (256000/2)
 #define DELAY 20000000
-#define N_TAPS 55
+#define N_TAPS 300
 #define STEP_SIZE 0.000000001
 
 
@@ -119,7 +119,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
     else if(flag == 4) {
         nLMS();
         flag++;
-        LOGD("----- Algorithm finished, output combined signal next -----");
+        LOGD("----- Algorithm finished, output primary signal next -----");
         for (int i = 0; i < DELAY; i++) {
         }
 
@@ -137,7 +137,8 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
         }
 
         else if (play_processed_signal == 0)  {
-            output = (int16_t)combined_signal[output_counter*FRAME_SIZE + sampleIdx];
+            output = (int16_t)primary_signal[output_counter*FRAME_SIZE + sampleIdx];
+            //output = 0;
             output_flag = 1;
         }
         else if (play_processed_signal == 1) {
@@ -154,7 +155,7 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
             if (play_processed_signal == 0) {
                 output_counter = 0;
                 play_processed_signal = 1;
-                LOGD("----- Combined signal outputted, output processed signal next -----");
+                LOGD("----- Primary signal outputted, output processed signal next -----");
                 for (int i = 0; i < DELAY; i++) {
                 }
             } else {
@@ -162,7 +163,6 @@ void ece420ProcessFrame(sample_buf *dataBuf) {
                 flag = 0;
                 output_counter = 0;
                 play_processed_signal = 0;
-                algorithm_frame_counter = 0;
                 LOGD("----- Processed signal outputted, DONE -----");
                 for (int i = 0; i < DELAY; i++) {
                     if (i < 100) {
@@ -199,7 +199,7 @@ void nLMS() {
             y[i] += x[k]*w[k];
         }
 
-        error_signal[i] = combined_signal[i+N_TAPS-1] - y[i];
+        error_signal[i] = primary_signal[i+N_TAPS-1] - y[i];
 
         for (int k = 0; k < N_TAPS; k++) {
             w[k] += STEP_SIZE*x[k]*error_signal[i];
